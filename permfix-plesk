@@ -1,0 +1,32 @@
+#!/bin/bash
+_dir="${2:-.}"
+_fperm="0644"
+_dperm="0755"
+_dphperm="0750"
+_ugperm="$1:psacln"
+_ugphperm="$1:psaserv"
+_chmod="/bin/chmod"
+_chown="/bin/chown"
+_find="/usr/bin/find"
+_xargs="/usr/bin/xargs"
+
+echo "Este script irá modificar as permissões de arquivos e diretórios recursivamente para a pasta \"$_dir\" com proprietário:grupo \"$_ugperm\""
+read -p "Atualmente, o diretório que você está é ${PWD}. Você tem certeza que deseja proceder (s / n) ?" ans
+if [ "$ans" == "s" ]
+then
+        echo "Alterando proprietário dos arquivos e diretórios para $_ugperm da pasta $_dir..."
+        $_chown -R "${_ugperm}" "$_dir"
+
+        echo "Configurando a permissão $_fperm recursivamente para o diretório $_dir..."
+        $_chmod -R "${_fperm}" "$_dir"
+
+        echo "Configurando a permissão $_dperm recursivamente para as pastas do diretório $_dir..."
+        $_find "$_dir" -type d -print0 | $_xargs -0 -I {} $_chmod $_dperm {}
+
+        echo "Configurando a permissão $_dphperm para o diretório public_html"
+        $_find "$_dir" -name "public_html" -type d -print0 | $_xargs -0 -I {} $_chmod $_dphperm {}
+
+        echo "Alterando proprietário do diretório public_html para $_ugphperm"
+        $_find "$_dir" -name "public_html" -type d -print0 | $_xargs -0 -I {} $_chown $_ugphperm {}
+fi
+
